@@ -15,6 +15,9 @@ on:
     branches:
       - main
   workflow_dispatch:
+  schedule:
+    # Retry build every hour until JitPack CDN recovers
+    - cron: '0 * * * *'
 
 jobs:
   build:
