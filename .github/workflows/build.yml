@@ -26,14 +26,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
       - name: Build Bengali Provider
-        run: ./gradlew SaicordBn:make
+        run: gradle SaicordBn:make
 
       - name: Build Hindi Provider
-        run: ./gradlew SaicordHi:make
+        run: gradle SaicordHi:make
 
       - name: Upload Bengali Plugin
         uses: actions/upload-artifact@v4
