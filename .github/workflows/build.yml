@@ -22,16 +22,17 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@master
+        uses: actions/checkout@v4
         with:
           path: "src"
 
       - name: Checkout builds branch
-        uses: actions/checkout@master
+        uses: actions/checkout@v4
         with:
           ref: "builds"
           path: "builds"
         continue-on-error: true
+        id: checkout-builds
 
       - name: Init builds branch if missing
         if: steps.checkout-builds.outcome == 'failure'
@@ -50,9 +51,10 @@ jobs:
         run: rm -f $GITHUB_WORKSPACE/builds/*.cs3 $GITHUB_WORKSPACE/builds/plugins.json || true
 
       - name: Setup JDK 17
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
-          java-version: 17
+          java-version: '17'
+          distribution: 'temurin'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
@@ -82,14 +84,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: SaicordBn
-          path: ${{ github.workspace }}/src/SaicordBn/build/outputs/**/*.cs3
+          path: ${{ github.workspace }}/src/**/build/*.cs3
           retention-days: 30
 
       - name: Upload Hindi Plugin
         uses: actions/upload-artifact@v4
         with:
           name: SaicordHi
-          path: ${{ github.workspace }}/src/SaicordHi/build/outputs/**/*.cs3
+          path: ${{ github.workspace }}/src/**/build/*.cs3
           retention-days: 30
 
       - name: Push builds
