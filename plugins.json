@@ -1,0 +1,42 @@
+[
+    {
+        "fileHash": "sha256-be6860f7c1e0886757edd479fab15fd76f6d6d57cb14b9abdf9bf1ee2e5f9a0b",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/mahdiridoy/Saicord-Extensions",
+        "fileSize": 20761,
+        "status": 1,
+        "authors": [
+            "mahdiridoy"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries",
+            "Cartoon"
+        ],
+        "version": 1,
+        "internalName": "SaicordBn",
+        "description": "Saicord Bengali Dubbed Movies & Series",
+        "url": "https://raw.githubusercontent.com/mahdiridoy/Saicord-Extensions/builds/SaicordBn.cs3",
+        "name": "SaicordBn"
+    },
+    {
+        "fileHash": "sha256-800f2ed54c734b48ff698f76256d3385553cd7813802f026d1d55eb03f47d644",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/mahdiridoy/Saicord-Extensions",
+        "fileSize": 20761,
+        "status": 1,
+        "authors": [
+            "mahdiridoy"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries",
+            "Cartoon"
+        ],
+        "version": 1,
+        "internalName": "SaicordHi",
+        "description": "Saicord Hindi Dubbed Movies & Series",
+        "url": "https://raw.githubusercontent.com/mahdiridoy/Saicord-Extensions/builds/SaicordHi.cs3",
+        "name": "SaicordHi"
+    }
+]
