@@ -1,0 +1,8 @@
+{
+    "name": "Saicord Extensions",
+    "description": "Bengali & Hindi dubbed movies and series from Saicord.com",
+    "manifestVersion": 1,
+    "pluginLists": [
+        "https://raw.githubusercontent.com/mahdiridoy/Saicord-Extensions/builds/plugins.json"
+    ]
+}
