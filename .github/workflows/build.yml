@@ -3,11 +3,9 @@ name: Build Saicord Extensions
 on:
   push:
     branches:
-      - master
       - main
   pull_request:
     branches:
-      - master
       - main
   workflow_dispatch:
 
@@ -18,8 +16,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -34,64 +30,34 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Bengali Provider
-        run: ./gradlew SaicordProvider:make
+        run: ./gradlew SaicordBn:make
+
+      - name: Build Hindi Provider
+        run: ./gradlew SaicordHi:make
 
       - name: Upload Bengali Plugin
         uses: actions/upload-artifact@v4
         with:
           name: SaicordBn
-          path: SaicordProvider/build/outputs/**/*.cs3
+          path: SaicordBn/build/outputs/**/*.cs3
           retention-days: 30
-
-      - name: Build Hindi Provider
-        run: ./gradlew SaicordProvider:make
 
       - name: Upload Hindi Plugin
         uses: actions/upload-artifact@v4
         with:
           name: SaicordHi
-          path: SaicordProvider/build/outputs/**/*.cs3
-          retention-days: 30
-
-      - name: Generate plugins.json
-        run: |
-          mkdir -p builds
-          echo '{"main":[' > builds/plugins.json
-          echo '  {' >> builds/plugins.json
-          echo '    "name":"Saicord (Bengali)",' >> builds/plugins.json
-          echo '    "url":"https://github.com/${{ github.repository }}/releases/download/latest/SaicordBn.cs3",' >> builds/plugins.json
-          echo '    "description":"Bengali dubbed movies from Saicord",' >> builds/plugins.json
-          echo '    "version":1,' >> builds/plugins.json
-          echo '    "hasUpdate":false,' >> builds/plugins.json
-          echo '    "size":0' >> builds/plugins.json
-          echo '  },' >> builds/plugins.json
-          echo '  {' >> builds/plugins.json
-          echo '    "name":"Saicord (Hindi)",' >> builds/plugins.json
-          echo '    "url":"https://github.com/${{ github.repository }}/releases/download/latest/SaicordHi.cs3",' >> builds/plugins.json
-          echo '    "description":"Hindi dubbed movies from Saicord",' >> builds/plugins.json
-          echo '    "version":1,' >> builds/plugins.json
-          echo '    "hasUpdate":false,' >> builds/plugins.json
-          echo '    "size":0' >> builds/plugins.json
-          echo '  }' >> builds/plugins.json
-          echo ']' >> builds/plugins.json
-          echo '}' >> builds/plugins.json
-
-      - name: Upload plugins.json
-        uses: actions/upload-artifact@v4
-        with:
-          name: plugins-json
-          path: builds/plugins.json
+          path: SaicordHi/build/outputs/**/*.cs3
           retention-days: 30
 
       - name: Create Release
-        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
           name: Latest Build
           files: |
-            SaicordProvider/build/outputs/**/*.cs3
-            builds/plugins.json
+            SaicordBn/build/outputs/**/*.cs3
+            SaicordHi/build/outputs/**/*.cs3
           body: |
             ## Saicord CloudStream Extensions
             
@@ -106,7 +72,7 @@ jobs:
             ### Installation
             1. Open CloudStream app
             2. Go to Settings > Extensions
-            3. Add repository URL: `https://raw.githubusercontent.com/${{ github.repository }}/master/repo.json`
-            4. Install Saicord extensions from the repository
+            3. Add repository: `https://raw.githubusercontent.com/mahdiridoy/Saicord-Extensions/main/repo.json`
+            4. Install the extensions
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
