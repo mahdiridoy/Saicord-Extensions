@@ -23,14 +23,14 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
       - name: Build Bengali Provider
-        run: gradle SaicordBn:make
+        run: ./gradlew SaicordBn:make
 
       - name: Build Hindi Provider
-        run: gradle SaicordHi:make
+        run: ./gradlew SaicordHi:make
 
       - name: Upload Bengali Plugin
         uses: actions/upload-artifact@v4
