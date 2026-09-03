@@ -4,6 +4,7 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
 import com.lagradost.cloudstream3.LoadResponse.Companion.addDuration
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.ExtractorLinkType
 import com.lagradost.cloudstream3.utils.Qualities
 import com.lagradost.cloudstream3.utils.loadExtractor
 import com.lagradost.cloudstream3.utils.newExtractorLink
@@ -176,8 +177,9 @@ class SaicordBn : MainAPI() {
                 val url = match.groupValues[1]
                 if (url.isNotEmpty()) {
                     callback(
-                        newExtractorLink(name, name, fixUrl(url), Qualities.P720) {
+                        newExtractorLink(name, name, fixUrl(url), ExtractorLinkType.VIDEO) {
                             this.referer = data
+                            this.quality = Qualities.P720.value
                         }
                     )
                 }
