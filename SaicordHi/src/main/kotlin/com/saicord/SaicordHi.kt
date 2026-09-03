@@ -166,15 +166,27 @@ class SaicordHi : MainAPI() {
     ): Boolean {
         val doc = app.get(data, headers = headers()).document
 
+        // Extract direct video sources - try multiple patterns
         val patterns = listOf(
-            """(?:src|file|source)\s*[:=]\s*["']([^"']+\.m3u8[^"']*)["']""",
-            """(?:src|file|source)\s*[:=]\s*["']([^"']+\.mp4[^"']*)["']"""
+            // m3u8 streams
+            """(?:src|file|source|video_url|stream_url|videoUrl|streamUrl)\s*[:=]\s*["']([^"']+\.m3u8[^"']*)["']""",
+            // mp4 files
+            """(?:src|file|source|video_url|stream_url|videoUrl|streamUrl)\s*[:=]\s*["']([^"']+\.mp4[^"']*)["']""",
+            // Any video URL (broader match)
+            """(?:src|file|source|video_url|stream_url|videoUrl|streamUrl)\s*[:=]\s*["'](https?://[^"']+(?:\.m3u8|\.mp4|\.webm|\.mkv)[^"']*)["']""",
+            // HLS streams
+            """["'](https?://[^"']+\.m3u8[^"']*)["']""",
+            // Generic video files
+            """["'](https?://[^"']+\.(?:mp4|mkv|webm)[^"']*)["']""",
         )
         val html = doc.html()
+        val foundUrls = mutableSetOf<String>()
+
         for (pattern in patterns) {
             Regex(pattern, RegexOption.IGNORE_CASE).findAll(html).forEach { match ->
                 val url = match.groupValues[1]
-                if (url.isNotEmpty()) {
+                if (url.isNotEmpty() && url !in foundUrls) {
+                    foundUrls.add(url)
                     callback(
                         newExtractorLink(name, name, fixUrl(url), ExtractorLinkType.VIDEO) {
                             this.referer = data
@@ -185,12 +197,32 @@ class SaicordHi : MainAPI() {
             }
         }
 
-        doc.select("iframe[src]").forEach { iframe ->
-            val src = iframe.attr("src")
+        // Try loadExtractor for iframes and video tags
+        doc.select("iframe[src], video source, video[src]").forEach { element ->
+            val src = when {
+                element.tagName() == "source" -> element.attr("src")
+                element.tagName() == "video" -> element.attr("src")
+                else -> element.attr("src")
+            }
             if (src.isNotEmpty()) {
-                try {
-                    loadExtractor(fixUrl(src), data, subtitleCallback, callback)
-                } catch (_: Exception) {}
+                val fullUrl = fixUrl(src)
+                if (fullUrl !in foundUrls) {
+                    foundUrls.add(fullUrl)
+                    try {
+                        // If direct video file, create extractor link
+                        if (Regex("""\.(m3u8|mp4|mkv|webm)($|\?)""", RegexOption.IGNORE_CASE).containsMatchIn(fullUrl)) {
+                            callback(
+                                newExtractorLink(name, name, fullUrl, ExtractorLinkType.VIDEO) {
+                                    this.referer = data
+                                    this.quality = Qualities.P720.value
+                                }
+                            )
+                        } else {
+                            // Try as iframe through loadExtractor
+                            loadExtractor(fullUrl, data, subtitleCallback, callback)
+                        }
+                    } catch (_: Exception) {}
+                }
             }
         }
 
