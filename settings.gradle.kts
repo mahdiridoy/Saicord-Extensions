@@ -1,6 +1,6 @@
 rootProject.name = "SaicordExtensions"
 
-val disabled = listOf<String>()
+val disabled = listOf("buildSrc", "cloudstream-gradle-plugin")
 
 File(rootDir, ".").eachDir { dir ->
     if (!disabled.contains(dir.name) && File(dir, "build.gradle.kts").exists()) {
