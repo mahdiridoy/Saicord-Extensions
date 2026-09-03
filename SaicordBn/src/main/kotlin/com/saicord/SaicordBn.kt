@@ -4,7 +4,9 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
 import com.lagradost.cloudstream3.LoadResponse.Companion.addDuration
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.Qualities
 import com.lagradost.cloudstream3.utils.loadExtractor
+import com.lagradost.cloudstream3.utils.newExtractorLink
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
@@ -174,14 +176,9 @@ class SaicordBn : MainAPI() {
                 val url = match.groupValues[1]
                 if (url.isNotEmpty()) {
                     callback(
-                        ExtractorLink(
-                            source = name,
-                            name = name,
-                            url = fixUrl(url),
-                            referer = data,
-                            quality = Qualities.P720,
-                            isAudio = false
-                        )
+                        newExtractorLink(name, name, fixUrl(url), Qualities.P720) {
+                            this.referer = data
+                        }
                     )
                 }
             }
