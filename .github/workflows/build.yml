@@ -23,6 +23,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    # Required to push build artifacts to the builds branch
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
