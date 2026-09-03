@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     `java-gradle-plugin`
     `maven-publish`
-    kotlin("jvm") version "2.1.0"
+    kotlin("jvm") version "2.4.0"
 }
 
 java {
@@ -30,7 +30,7 @@ dependencies {
     implementation("com.android.tools.build:gradle:8.7.3")
     // Implementation (not compileOnly) so KotlinCompile class is available at runtime
     // when the plugin is applied to subprojects
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.0")
 
     implementation("org.ow2.asm:asm:9.7.1")
     implementation("org.ow2.asm:asm-tree:9.7.1")

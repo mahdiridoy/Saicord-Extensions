@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     `java-gradle-plugin`
     `maven-publish`
-    kotlin("jvm") version "2.1.0"
+    kotlin("jvm") version "2.4.0"
 }
 
 group = "com.lagradost.cloudstream3"
@@ -37,7 +37,7 @@ dependencies {
     compileOnly("com.google.guava:guava:33.6.0-jre")
     compileOnly("com.android.tools:sdk-common:32.1.1")
     compileOnly("com.android.tools.build:gradle:8.7.3")
-    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0")
+    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.0")
 
     implementation("org.ow2.asm:asm:9.7.1")
     implementation("org.ow2.asm:asm-tree:9.7.1")
