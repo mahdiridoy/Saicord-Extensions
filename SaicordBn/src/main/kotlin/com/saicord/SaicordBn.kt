@@ -120,6 +120,7 @@ class SaicordBn : MainAPI() {
             doc.selectFirst(".rating, .score, .imdb-rating")?.text() ?: ""
         )?.value?.toFloatOrNull()
         val duration = doc.selectFirst(".duration, .runtime")?.text()
+            ?.let { Regex("""(\d+)""").find(it)?.value?.toIntOrNull() }
         val tags = doc.select(".genre a, .tag a, .genres a").map { it.text().trim() }.filter { it.isNotEmpty() }
         val actors = doc.select(".cast a, .actor a, .stars a").map { it.text().trim() }.filter { it.isNotEmpty() }
 
@@ -172,10 +173,16 @@ class SaicordBn : MainAPI() {
             Regex(pattern, RegexOption.IGNORE_CASE).findAll(html).forEach { match ->
                 val url = match.groupValues[1]
                 if (url.isNotEmpty()) {
-                    callback(newExtractorLink(name, name, fixUrl(url)) {
-                        this.referer = data
-                        quality = Qualities.P720.value
-                    })
+                    callback(
+                        ExtractorLink(
+                            source = name,
+                            name = name,
+                            url = fixUrl(url),
+                            referer = data,
+                            quality = Qualities.P720,
+                            isAudio = false
+                        )
+                    )
                 }
             }
         }
