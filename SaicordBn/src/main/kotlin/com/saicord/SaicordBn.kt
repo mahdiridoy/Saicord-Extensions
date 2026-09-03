@@ -16,7 +16,7 @@ class SaicordBn : MainAPI() {
     override var mainUrl = "https://saicord.com"
     override var lang = "bn"
     override val hasMainPage = true
-    override val supportedTypes = setOf(TvType.Movie, TvType.TvSeries, TvType.Cartoon)
+    override val supportedTypes = setOf(TvType.Movie, TvType.TvSeries, TvType.Cartoon, TvType.Documentary)
 
     private val bnUrl get() = "$mainUrl/bn"
 
@@ -41,21 +41,22 @@ class SaicordBn : MainAPI() {
             "Movies" -> "$bnUrl/movies/"
             "Series" -> "$bnUrl/series/"
             "Cartoons" -> "$bnUrl/animation/"
-            "Trending" -> "$bnUrl/trending.html"
-            "Top Rated" -> "$bnUrl/top.html"
+            "TV+" -> "$bnUrl/tvplus/"
             "Coming Soon" -> "$bnUrl/coming-soon.html"
+            "Trending" -> "$bnUrl/trending.html"
+            "Latest" -> "$bnUrl/latest.html"
             else -> bnUrl
         }
 
         val document = app.get(url, headers = headers()).document
-        val items = document.select("article, .short-item, .shortstory, .movie-item, .content-item, .item, .card, .poster-item, .grid-item").mapNotNull { el ->
+        val items = document.select("article, .short-item, .shortstory, .movie-item, .content-item, .item, .card, .poster-item, .grid-item, .movie, .movie-card, .film, .poster, .thumbs, .thumbs-item, .thumb-item, [class*=movie], [class*=film], [class*=poster], [class*=thumb], [class*=card]").mapNotNull { el ->
             val link = el.selectFirst("a[href]") ?: return@mapNotNull null
             val href = link.attr("href")
-            val title = el.selectFirst("h2, h3, h4, .title, .name")?.text()
+            val title = el.selectFirst("h2, h3, h4, .title, .name, .movie-title, .film-title, [class*=title], [class*=name]")?.text()
                 ?: link.attr("title").ifEmpty { null }
                 ?: link.text().trim()
             val poster = el.selectFirst("img")?.let { img ->
-                img.attr("src").ifEmpty { img.attr("data-src") }.ifEmpty { img.attr("data-original") }
+                img.attr("src").ifEmpty { img.attr("data-src") }.ifEmpty { img.attr("data-original") }.ifEmpty { img.attr("data-lazy-src") }
             }
             val year = Regex("""\d{4}""").find(el.text())?.value?.toIntOrNull()
 
@@ -65,6 +66,7 @@ class SaicordBn : MainAPI() {
                 href.contains("/movies/") -> TvType.Movie
                 href.contains("/series/") -> TvType.TvSeries
                 href.contains("/animation/") -> TvType.Cartoon
+                href.contains("/tvplus/") -> TvType.Documentary
                 else -> TvType.Movie
             }
 
@@ -129,6 +131,7 @@ class SaicordBn : MainAPI() {
 
         val isSeries = url.contains("/series/") || doc.select(".episode, .season").isNotEmpty()
         val isCartoon = url.contains("/animation/")
+        val isDocumentary = url.contains("/tvplus/")
 
         return if (isSeries) {
             val episodes = doc.select(".episode a, .episodes a, a[href*=episode], a[href*=ep], a[href*=watch]").mapNotNull { el ->
@@ -146,7 +149,11 @@ class SaicordBn : MainAPI() {
                 if (actors.isNotEmpty()) addActors(actors)
             }
         } else {
-            val type = if (isCartoon) TvType.Cartoon else TvType.Movie
+            val type = when {
+                isCartoon -> TvType.Cartoon
+                isDocumentary -> TvType.Documentary
+                else -> TvType.Movie
+            }
             newMovieLoadResponse(title, fixUrl(url), type, fixUrl(url)) {
                 this.posterUrl = poster?.let { fixUrl(it) }
                 this.plot = plot
@@ -166,21 +173,32 @@ class SaicordBn : MainAPI() {
     ): Boolean {
         val doc = app.get(data, headers = headers()).document
 
+        // Try to find the watch/play page (clicking "Watch now" goes to a player)
+        val watchUrl = doc.selectFirst("a[href*=watch], a[href*=play], a.btn-watch, a.btn-play, .watch-btn a, .play-btn a, [class*=watch] a, [class*=play] a")?.attr("href")
+        val targetUrl = watchUrl?.let { fixUrl(it) } ?: data
+
+        val targetDoc = if (watchUrl != null) {
+            try { app.get(targetUrl, headers = headers()).document } catch (_: Exception) { doc }
+        } else {
+            doc
+        }
+
+        val html = targetDoc.html()
+        val foundUrls = mutableSetOf<String>()
+
         // Extract direct video sources - try multiple patterns
         val patterns = listOf(
-            // m3u8 streams
-            """(?:src|file|source|video_url|stream_url|videoUrl|streamUrl)\s*[:=]\s*["']([^"']+\.m3u8[^"']*)["']""",
+            // m3u8 streams (most likely for this site)
+            """(?:src|file|source|video_url|stream_url|videoUrl|streamUrl|playlist_url|file_url|video)\s*[:=]\s*["']([^"']+\.m3u8[^"']*)["']""",
             // mp4 files
-            """(?:src|file|source|video_url|stream_url|videoUrl|streamUrl)\s*[:=]\s*["']([^"']+\.mp4[^"']*)["']""",
-            // Any video URL (broader match)
-            """(?:src|file|source|video_url|stream_url|videoUrl|streamUrl)\s*[:=]\s*["'](https?://[^"']+(?:\.m3u8|\.mp4|\.webm|\.mkv)[^"']*)["']""",
-            // HLS streams
+            """(?:src|file|source|video_url|stream_url|videoUrl|streamUrl|file_url)\s*[:=]\s*["']([^"']+\.mp4[^"']*)["']""",
+            // HLS playlist URLs (this site uses cdnmvs.online)
             """["'](https?://[^"']+\.m3u8[^"']*)["']""",
             // Generic video files
             """["'](https?://[^"']+\.(?:mp4|mkv|webm)[^"']*)["']""",
+            // cdnmvs.online specific
+            """["'](https?://s\d+\.cdnmvs\.online/[^"']+)["']""",
         )
-        val html = doc.html()
-        val foundUrls = mutableSetOf<String>()
 
         for (pattern in patterns) {
             Regex(pattern, RegexOption.IGNORE_CASE).findAll(html).forEach { match ->
@@ -188,8 +206,8 @@ class SaicordBn : MainAPI() {
                 if (url.isNotEmpty() && url !in foundUrls) {
                     foundUrls.add(url)
                     callback(
-                        newExtractorLink(name, name, fixUrl(url), ExtractorLinkType.VIDEO) {
-                            this.referer = data
+                        newExtractorLink(name, name, url, ExtractorLinkType.VIDEO) {
+                            this.referer = targetUrl
                             this.quality = Qualities.P720.value
                         }
                     )
@@ -198,32 +216,33 @@ class SaicordBn : MainAPI() {
         }
 
         // Try loadExtractor for iframes and video tags
-        doc.select("iframe[src], video source, video[src]").forEach { element ->
-            val src = when {
-                element.tagName() == "source" -> element.attr("src")
-                element.tagName() == "video" -> element.attr("src")
-                else -> element.attr("src")
-            }
+        targetDoc.select("iframe[src], video source[src], video[src]").forEach { element ->
+            val src = element.attr("src")
             if (src.isNotEmpty()) {
                 val fullUrl = fixUrl(src)
                 if (fullUrl !in foundUrls) {
                     foundUrls.add(fullUrl)
                     try {
-                        // If direct video file, create extractor link
                         if (Regex("""\.(m3u8|mp4|mkv|webm)($|\?)""", RegexOption.IGNORE_CASE).containsMatchIn(fullUrl)) {
                             callback(
                                 newExtractorLink(name, name, fullUrl, ExtractorLinkType.VIDEO) {
-                                    this.referer = data
+                                    this.referer = targetUrl
                                     this.quality = Qualities.P720.value
                                 }
                             )
                         } else {
-                            // Try as iframe through loadExtractor
-                            loadExtractor(fullUrl, data, subtitleCallback, callback)
+                            loadExtractor(fullUrl, targetUrl, subtitleCallback, callback)
                         }
                     } catch (_: Exception) {}
                 }
             }
+        }
+
+        // If we still have no links, try the data URL itself with loadExtractor
+        if (foundUrls.isEmpty() && data != targetUrl) {
+            try {
+                loadExtractor(targetUrl, data, subtitleCallback, callback)
+            } catch (_: Exception) {}
         }
 
         return true
