@@ -28,7 +28,9 @@ dependencies {
     implementation("com.google.guava:guava:33.6.0-jre")
     implementation("com.android.tools:sdk-common:31.1.1")
     implementation("com.android.tools.build:gradle:8.7.3")
-    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0")
+    // Implementation (not compileOnly) so KotlinCompile class is available at runtime
+    // when the plugin is applied to subprojects
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0")
 
     implementation("org.ow2.asm:asm:9.7.1")
     implementation("org.ow2.asm:asm-tree:9.7.1")
